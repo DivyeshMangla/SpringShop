@@ -34,8 +34,6 @@ subprojects {
         implementation("org.springframework.boot:spring-boot-starter-actuator")
         implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
         implementation("org.springframework.cloud:spring-cloud-starter-bootstrap")
-        compileOnly("org.projectlombok:lombok")
-        annotationProcessor("org.projectlombok:lombok")
         testImplementation("org.springframework.boot:spring-boot-starter-test")
         testImplementation(platform("org.junit:junit-bom:5.10.0"))
         testImplementation("org.junit.jupiter:junit-jupiter")

@@ -4,7 +4,6 @@ import io.github.divyesh.user.dto.UserRequest;
 import io.github.divyesh.user.dto.UserResponse;
 import io.github.divyesh.user.model.User;
 import io.github.divyesh.user.service.UserService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,25 +11,36 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * REST controller for managing user-related operations.
+ * Provides endpoints for creating, retrieving, updating, and deleting users.
+ */
 @RestController
 @RequestMapping("/api/users")
-@RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
 
     /**
+     * Constructs a {@code UserController} with the given {@code UserService}.
+     * @param userService The service responsible for user business logic.
+     */
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
+
+    /**
      * Creates a new user.
      * @param userRequest The user request object containing user details.
-     * @return A ResponseEntity with the created user's response and HTTP status.
+     * @return A {@code ResponseEntity} with the created user's response and HTTP status.
      */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<UserResponse> createUser(@RequestBody UserRequest userRequest) {
         User user = User.builder()
-                .username(userRequest.getUsername())
-                .email(userRequest.getEmail())
-                .password(userRequest.getPassword())
+                .username(userRequest.username())
+                .email(userRequest.email())
+                .password(userRequest.password())
                 .build();
         User savedUser = userService.createUser(user);
         return new ResponseEntity<>(mapToUserResponse(savedUser), HttpStatus.CREATED);
@@ -51,7 +61,7 @@ public class UserController {
     /**
      * Retrieves a user by ID.
      * @param id The ID of the user to retrieve.
-     * @return A ResponseEntity with the user response and HTTP status.
+     * @return A {@code ResponseEntity} with the user response and HTTP status.
      */
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
@@ -64,14 +74,14 @@ public class UserController {
      * Updates an existing user.
      * @param id The ID of the user to update.
      * @param userRequest The user request object with updated details.
-     * @return A ResponseEntity with the updated user response and HTTP status.
+     * @return A {@code ResponseEntity} with the updated user response and HTTP status.
      */
     @PutMapping("/{id}")
     public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @RequestBody UserRequest userRequest) {
         User userDetails = User.builder()
-                .username(userRequest.getUsername())
-                .email(userRequest.getEmail())
-                .password(userRequest.getPassword())
+                .username(userRequest.username())
+                .email(userRequest.email())
+                .password(userRequest.password())
                 .build();
         return userService.updateUser(id, userDetails)
                 .map(user -> new ResponseEntity<>(mapToUserResponse(user), HttpStatus.OK))
@@ -81,7 +91,7 @@ public class UserController {
     /**
      * Deletes a user by ID.
      * @param id The ID of the user to delete.
-     * @return A ResponseEntity with no content and HTTP status.
+     * @return A {@code ResponseEntity} with no content and HTTP status.
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
@@ -89,6 +99,11 @@ public class UserController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    /**
+     * Maps a {@link User} entity to a {@link UserResponse} DTO.
+     * @param user The {@link User} entity to map.
+     * @return The mapped {@link UserResponse} DTO.
+     */
     private UserResponse mapToUserResponse(User user) {
         return UserResponse.builder()
                 .id(user.getId())

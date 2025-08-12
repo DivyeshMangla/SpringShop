@@ -6,6 +6,7 @@ import io.github.divyesh.product.model.Product;
 import io.github.divyesh.product.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid; // Added import
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,8 +38,16 @@ public class ProductController {
      */
     @PostMapping
     @Operation(summary = "Create a new product", description = "Adds a new product to the database")
-    public ProductResponse createProduct(@RequestBody ProductRequest productRequest) {
-        Product product = mapToProduct(productRequest);
+    public ProductResponse createProduct(@Valid @RequestBody ProductRequest productRequest) { // Added @Valid
+        Product product = Product.builder()
+                .name(productRequest.name())
+                .description(productRequest.description())
+                .price(productRequest.price())
+                .quantity(productRequest.quantity())
+                .sku(productRequest.sku())
+                .imageUrl(productRequest.imageUrl())
+                .attributes(productRequest.attributes())
+                .build();
         Product savedProduct = productService.saveProduct(product);
         return mapToProductResponse(savedProduct);
     }
@@ -86,28 +95,19 @@ public class ProductController {
      */
     @PutMapping("/{id}")
     @Operation(summary = "Update product by ID", description = "Updates an existing product identified by its ID")
-    public ProductResponse updateProduct(@PathVariable String id, @RequestBody ProductRequest productRequest) {
-        Product product = mapToProduct(productRequest);
-        product.setId(id); // Set the ID from the path for update
+    public ProductResponse updateProduct(@PathVariable String id, @Valid @RequestBody ProductRequest productRequest) { // Added @Valid
+        Product product = Product.builder()
+                .name(productRequest.name())
+                .description(productRequest.description())
+                .price(productRequest.price())
+                .quantity(productRequest.quantity())
+                .sku(productRequest.sku())
+                .imageUrl(productRequest.imageUrl())
+                .attributes(productRequest.attributes())
+                .build();
+        product.setId(id);
         Product updatedProduct = productService.saveProduct(product);
         return mapToProductResponse(updatedProduct);
-    }
-
-    /**
-     * Maps a ProductRequest DTO to a Product entity.
-     * @param request The ProductRequest DTO to map.
-     * @return The mapped Product entity.
-     */
-    private Product mapToProduct(ProductRequest request) {
-        Product product = new Product();
-        product.setName(request.getName());
-        product.setDescription(request.getDescription());
-        product.setPrice(request.getPrice());
-        product.setQuantity(request.getQuantity());
-        product.setSku(request.getSku());
-        product.setImageUrl(request.getImageUrl());
-        product.setAttributes(request.getAttributes());
-        return product;
     }
 
     /**
@@ -116,15 +116,15 @@ public class ProductController {
      * @return The mapped ProductResponse DTO.
      */
     private ProductResponse mapToProductResponse(Product product) {
-        ProductResponse response = new ProductResponse();
-        response.setId(product.getId());
-        response.setName(product.getName());
-        response.setDescription(product.getDescription());
-        response.setPrice(product.getPrice());
-        response.setQuantity(product.getQuantity());
-        response.setSku(product.getSku());
-        response.setImageUrl(product.getImageUrl());
-        response.setAttributes(product.getAttributes());
-        return response;
+        return ProductResponse.builder()
+                .id(product.getId())
+                .name(product.getName())
+                .description(product.getDescription())
+                .price(product.getPrice())
+                .quantity(product.getQuantity())
+                .sku(product.getSku())
+                .imageUrl(product.getImageUrl())
+                .attributes(product.getAttributes())
+                .build();
     }
 }
