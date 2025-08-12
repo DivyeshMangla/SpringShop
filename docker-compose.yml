@@ -48,6 +48,26 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=default # Ensure it loads default profile
 
+  user-service:
+    build:
+      context: ./user-service
+    ports:
+      - "8083:8083"
+    networks:
+      - spring-shop-net
+    depends_on:
+      config-server:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://user-service:8083/actuator/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 15
+    environment:
+      - SPRING_PROFILES_ACTIVE=default # Ensure it loads default profile
+
   api-gateway:
     build:
       context: ./api-gateway

@@ -1,5 +1,5 @@
-FROM openjdk:21-jdk-slim
-VOLUME /tmp
-ARG JAR_FILE
-COPY ${JAR_FILE} app.jar
-ENTRYPOINT ["java","-jar","/app.jar"]
+FROM eclipse-temurin:21-jdk-alpine
+WORKDIR /app
+RUN apk add --no-cache curl
+COPY build/libs/user-service.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
