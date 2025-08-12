@@ -5,10 +5,25 @@ spring:
   application:
     name: config-server
   profiles:
-    active: native # Use the native file system backend
+    active: native
   cloud:
     config:
       server:
         native:
-          # Point to a 'configs' directory inside our project
           search-locations: file:./configs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka-server:8761/eureka/
+    initial-instance-info-replication-interval-seconds: 5
+    instance-info-replication-interval-seconds: 5
