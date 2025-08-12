@@ -1,7 +1,6 @@
 package io.github.divyesh.product.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.divyesh.product.controller.ProductController;
 import io.github.divyesh.product.dto.ProductRequest;
 import io.github.divyesh.product.exception.ProductNotFoundException;
 import io.github.divyesh.product.model.Product;
@@ -46,18 +45,20 @@ class ProductControllerIntegrationTest {
      */
     @Test
     void createProduct_shouldReturnCreatedProduct() throws Exception {
-        ProductRequest productRequest = new ProductRequest();
-        productRequest.setName("Test Product");
-        productRequest.setDescription("Description");
-        productRequest.setPrice(10.0);
-        productRequest.setQuantity(100);
-        productRequest.setSku("SKU123");
-        productRequest.setImageUrl("http://example.com/image.jpg");
-        productRequest.setAttributes(Map.of("color", "red"));
+        ProductRequest productRequest = ProductRequest
+                .builder()
+                .name("Test Product")
+                .description("Description")
+                .price(10.0)
+                .quantity(100)
+                .sku("SKU123")
+                .imageUrl("http://example.com/image.jpg")
+                .attributes(Map.of("color", "red"))
+                .build();
 
         Product productEntity = new Product();
         productEntity.setId("new-id");
-        productEntity.setName(productRequest.getName());
+        productEntity.setName(productRequest.name());
 
         when(productService.saveProduct(any(Product.class))).thenReturn(productEntity);
 
@@ -126,19 +127,25 @@ class ProductControllerIntegrationTest {
      */
     @Test
     void updateProduct_shouldReturnUpdatedProduct() throws Exception {
-        ProductRequest productRequest = new ProductRequest();
-        productRequest.setName("Updated Product");
-        productRequest.setDescription("Updated Description");
-        productRequest.setPrice(15.0);
-        productRequest.setQuantity(50);
-        productRequest.setSku("SKU123");
-        productRequest.setImageUrl("http://example.com/updated_image.jpg");
-        productRequest.setAttributes(java.util.Map.of("color", "blue"));
+        ProductRequest productRequest = ProductRequest.builder()
+                .name("Updated Product")
+                .description("Updated Description")
+                .price(15.0)
+                .quantity(50)
+                .sku("SKU123")
+                .imageUrl("http://example.com/updated_image.jpg")
+                .attributes(java.util.Map.of("color", "blue"))
+                .build();
 
         Product updatedProductEntity = new Product();
         updatedProductEntity.setId("1");
-        updatedProductEntity.setName(productRequest.getName());
-        // ... copy other fields from productRequest to updatedProductEntity
+        updatedProductEntity.setName(productRequest.name());
+        updatedProductEntity.setDescription(productRequest.description());
+        updatedProductEntity.setPrice(productRequest.price());
+        updatedProductEntity.setQuantity(productRequest.quantity());
+        updatedProductEntity.setSku(productRequest.sku());
+        updatedProductEntity.setImageUrl(productRequest.imageUrl());
+        updatedProductEntity.setAttributes(productRequest.attributes());
 
         when(productService.saveProduct(any(Product.class))).thenReturn(updatedProductEntity);
 
