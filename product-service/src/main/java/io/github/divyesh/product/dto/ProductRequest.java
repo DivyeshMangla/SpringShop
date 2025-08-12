@@ -1,4 +1,4 @@
-package io.github.divyesh.springshop.product.dto;
+package io.github.divyesh.product.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

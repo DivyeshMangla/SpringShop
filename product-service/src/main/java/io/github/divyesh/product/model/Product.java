@@ -1,4 +1,4 @@
-package io.github.divyesh.springshop.product.model;
+package io.github.divyesh.product.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

@@ -1,10 +1,11 @@
-package io.github.divyesh.springshop.product.controller;
+package io.github.divyesh.product.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.divyesh.springshop.product.dto.ProductRequest;
-import io.github.divyesh.springshop.product.exception.ProductNotFoundException;
-import io.github.divyesh.springshop.product.model.Product;
-import io.github.divyesh.springshop.product.service.ProductService;
+import io.github.divyesh.product.controller.ProductController;
+import io.github.divyesh.product.dto.ProductRequest;
+import io.github.divyesh.product.exception.ProductNotFoundException;
+import io.github.divyesh.product.model.Product;
+import io.github.divyesh.product.service.ProductService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;

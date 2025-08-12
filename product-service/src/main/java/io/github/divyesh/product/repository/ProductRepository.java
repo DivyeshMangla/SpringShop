@@ -1,6 +1,6 @@
-package io.github.divyesh.springshop.product.repository;
+package io.github.divyesh.product.repository;
 
-import io.github.divyesh.springshop.product.model.Product;
+import io.github.divyesh.product.model.Product;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 /**

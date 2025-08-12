@@ -1,4 +1,4 @@
-package io.github.divyesh.springshop.product.exception;
+package io.github.divyesh.product.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

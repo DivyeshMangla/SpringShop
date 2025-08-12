@@ -1,9 +1,9 @@
-package io.github.divyesh.springshop.product.controller;
+package io.github.divyesh.product.controller;
 
-import io.github.divyesh.springshop.product.dto.ProductRequest;
-import io.github.divyesh.springshop.product.dto.ProductResponse;
-import io.github.divyesh.springshop.product.model.Product;
-import io.github.divyesh.springshop.product.service.ProductService;
+import io.github.divyesh.product.dto.ProductRequest;
+import io.github.divyesh.product.dto.ProductResponse;
+import io.github.divyesh.product.model.Product;
+import io.github.divyesh.product.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;

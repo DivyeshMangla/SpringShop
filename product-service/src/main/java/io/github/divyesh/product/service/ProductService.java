@@ -1,8 +1,8 @@
-package io.github.divyesh.springshop.product.service;
+package io.github.divyesh.product.service;
 
-import io.github.divyesh.springshop.product.exception.ProductNotFoundException;
-import io.github.divyesh.springshop.product.model.Product;
-import io.github.divyesh.springshop.product.repository.ProductRepository;
+import io.github.divyesh.product.exception.ProductNotFoundException;
+import io.github.divyesh.product.model.Product;
+import io.github.divyesh.product.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
