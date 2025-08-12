@@ -1,0 +1,84 @@
+services:
+  eureka-server:
+    build:
+      context: ./eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - spring-shop-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://eureka-server:8761/actuator/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 15
+
+  config-server:
+    build:
+      context: ./config-server
+    ports:
+      - "8888:8888"
+    networks:
+      - spring-shop-net
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://config-server:8888/actuator/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 15
+
+  product-service:
+    build:
+      context: ./product-service
+    ports:
+      - "8082:8082"
+    networks:
+      - spring-shop-net
+    depends_on:
+      config-server:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://product-service:8082/actuator/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 15
+    environment:
+      - SPRING_PROFILES_ACTIVE=default # Ensure it loads default profile
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+    ports:
+      - "8080:8080"
+    networks:
+      - spring-shop-net
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://api-gateway:8080/actuator/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 15
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    networks:
+      - spring-shop-net
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+networks:
+  spring-shop-net:
+    driver: bridge
