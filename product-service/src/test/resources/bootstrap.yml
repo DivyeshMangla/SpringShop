@@ -1,6 +1,0 @@
-spring:
-  cloud:
-    bootstrap:
-      enabled: false
-    config:
-      enabled: false

@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: api-gateway
+  config:
+    import: "configserver:http://config-server:8888"
+  cloud:
+    config:
+      fail-fast: true
+      retry:
+        initial-interval: 1000
+        max-attempts: 6
+  main:
+    web-application-type: reactive
+
+server:
+  port: 8081
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka-server:8761/eureka
+
+logging:
+  level:
+    root: DEBUG
