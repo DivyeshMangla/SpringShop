@@ -1,5 +1,7 @@
 package io.github.divyesh.user.service;
 
+import io.github.divyesh.user.exception.UserNotFoundException;
+
 import io.github.divyesh.user.model.User;
 import io.github.divyesh.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -76,8 +78,9 @@ public class UserService {
      * Deletes a user by their ID.
      * @param id The ID of the user to delete.
      */
-    public void deleteUser(long id) {
-        log.info("Deleting user with ID: {}", id);
+    public void deleteUser(Long id) {
+        userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + id));
         userRepository.deleteById(id);
     }
 }

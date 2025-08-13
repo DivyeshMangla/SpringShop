@@ -4,6 +4,8 @@ import io.github.divyesh.user.dto.UserRequest;
 import io.github.divyesh.user.dto.UserResponse;
 import io.github.divyesh.user.model.User;
 import io.github.divyesh.user.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +19,7 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/api/users")
+@Tag(name = "User", description = "User management APIs")
 public class UserController {
 
     private final UserService userService;
@@ -36,6 +39,7 @@ public class UserController {
      */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Create a new user", description = "Registers a new user in the system.")
     public ResponseEntity<UserResponse> createUser(@RequestBody UserRequest userRequest) {
         User user = User.builder()
                 .username(userRequest.username())
@@ -52,6 +56,7 @@ public class UserController {
      */
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Get all users", description = "Retrieves a list of all registered users.")
     public List<UserResponse> getAllUsers() {
         return userService.getAllUsers().stream()
                 .map(this::mapToUserResponse)
@@ -64,6 +69,7 @@ public class UserController {
      * @return A {@code ResponseEntity} with the user response and HTTP status.
      */
     @GetMapping("/{id}")
+    @Operation(summary = "Get user by ID", description = "Retrieves a user by their unique ID.")
     public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
         return userService.getUserById(id)
                 .map(user -> new ResponseEntity<>(mapToUserResponse(user), HttpStatus.OK))
@@ -77,6 +83,7 @@ public class UserController {
      * @return A {@code ResponseEntity} with the updated user response and HTTP status.
      */
     @PutMapping("/{id}")
+    @Operation(summary = "Update user by ID", description = "Updates an existing user's details by their unique ID.")
     public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @RequestBody UserRequest userRequest) {
         User userDetails = User.builder()
                 .username(userRequest.username())
@@ -93,7 +100,9 @@ public class UserController {
      * @param id The ID of the user to delete.
      * @return A {@code ResponseEntity} with no content and HTTP status.
      */
-    @DeleteMapping("/{id}")
+        @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Delete user by ID", description = "Deletes a user from the system by their unique ID.")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
