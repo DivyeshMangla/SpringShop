@@ -1,5 +1,6 @@
 package io.github.divyesh.user.controller;
 
+import io.github.divyesh.user.dto.LoginRequest;
 import io.github.divyesh.user.dto.UserRequest;
 import io.github.divyesh.user.dto.UserResponse;
 import io.github.divyesh.user.model.User;
@@ -60,7 +61,7 @@ public class UserController {
     public List<UserResponse> getAllUsers() {
         return userService.getAllUsers().stream()
                 .map(this::mapToUserResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -106,6 +107,19 @@ public class UserController {
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    /**
+     * Authenticates a user with username and password.
+     * @param loginRequest The login request containing username and password.
+     * @return A {@code ResponseEntity} with the user response if authentication is successful.
+     */
+    @PostMapping("/login")
+    @Operation(summary = "User login", description = "Authenticates a user with username and password.")
+    public ResponseEntity<UserResponse> login(@RequestBody LoginRequest loginRequest) {
+        return userService.authenticateUser(loginRequest.username(), loginRequest.password())
+                .map(user -> new ResponseEntity<>(mapToUserResponse(user), HttpStatus.OK))
+                .orElse(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
     }
 
     /**

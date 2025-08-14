@@ -9,6 +9,32 @@ spring:
       retry:
         initial-interval: 1000
         max-attempts: 6
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: eureka-server
+          uri: lb://EUREKA-SERVER
+          predicates:
+            - Path=/eureka/**
+        - id: config-server
+          uri: lb://CONFIG-SERVER
+          predicates:
+            - Path=/config/**
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/users/**
+        - id: product-service
+          uri: lb://PRODUCT-SERVICE
+          predicates:
+            - Path=/api/products/**
+        - id: order-service
+          uri: lb://ORDER-SERVICE
+          predicates:
+            - Path=/api/orders/**
   main:
     web-application-type: reactive
 

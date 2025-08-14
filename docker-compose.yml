@@ -81,7 +81,7 @@ services:
     depends_on:
       config-server:
         condition: service_healthy
-      postgresql:
+      postgresql-users:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://user-service:8083/actuator/health"]
@@ -108,7 +108,7 @@ services:
     depends_on:
       config-server:
         condition: service_healthy
-      postgresql:
+      postgresql-orders:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://order-service:8084/actuator/health"]
@@ -152,7 +152,7 @@ services:
           cpus: '0.25'
           memory: 256M
 
-  postgresql:
+  postgresql-users:
     image: postgres:latest
     ports:
       - "5432:5432"
@@ -168,7 +168,25 @@ services:
       timeout: 5s
       retries: 5
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_users_data:/var/lib/postgresql/data
+
+  postgresql-orders:
+    image: postgres:latest
+    ports:
+      - "5433:5432"
+    networks:
+      - spring-shop-net
+    environment:
+      - POSTGRES_DB=spring_shop_orders_db
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d spring_shop_orders_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_orders_data:/var/lib/postgresql/data
 
   mongodb:
     image: mongo:latest
@@ -190,5 +208,6 @@ networks:
     driver: bridge
 
 volumes:
-  postgres_data:
+  postgres_users_data:
+  postgres_orders_data:
   mongo_data:

@@ -83,4 +83,16 @@ public class UserService {
                 .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + id));
         userRepository.deleteById(id);
     }
+
+    /**
+     * Authenticates a user with username and password.
+     * @param username The username.
+     * @param password The password.
+     * @return An Optional containing the user if authentication is successful.
+     */
+    public Optional<User> authenticateUser(String username, String password) {
+        log.info("Authenticating user: {}", username);
+        return userRepository.findByUsername(username)
+                .filter(user -> user.getPassword().equals(password));
+    }
 }
