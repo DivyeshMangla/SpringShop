@@ -1,6 +1,8 @@
 package io.github.divyesh.user.model;
 
 import jakarta.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Represents a user entity in the system.
@@ -12,9 +14,17 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true)
     private String username;
+    @Column(unique = true)
     private String email;
     private String password;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id"))
+    private Set<Role> roles = new HashSet<>();
 
     /**
      * Default constructor for JPA.
@@ -27,12 +37,14 @@ public class User {
      * @param username The username of the user.
      * @param email The email address of the user.
      * @param password The password of the user.
+     * @param roles The roles assigned to the user.
      */
-    public User(Long id, String username, String email, String password) {
+    public User(Long id, String username, String email, String password, Set<Role> roles) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.password = password;
+        this.roles = roles;
     }
 
     /**
@@ -68,6 +80,14 @@ public class User {
     }
 
     /**
+     * Returns the roles assigned to the user.
+     * @return A set of roles.
+     */
+    public Set<Role> getRoles() {
+        return roles;
+    }
+
+    /**
      * Sets the unique identifier of the user.
      * @param id The user ID to set.
      */
@@ -100,6 +120,14 @@ public class User {
     }
 
     /**
+     * Sets the roles assigned to the user.
+     * @param roles A set of roles to set.
+     */
+    public void setRoles(Set<Role> roles) {
+        this.roles = roles;
+    }
+
+    /**
      * Creates a new builder for {@link User}.
      * @return A new {@link UserBuilder}.
      */
@@ -111,10 +139,11 @@ public class User {
      * Builder for {@link User}.
      */
     public static class UserBuilder {
-        private long id;
+        private Long id;
         private String username;
         private String email;
         private String password;
+        private Set<Role> roles = new HashSet<>();
 
         /**
          * Private constructor to enforce the use of {@link #builder()}.
@@ -126,7 +155,7 @@ public class User {
          * @param id The user ID.
          * @return The builder instance.
          */
-        public UserBuilder id(long id) {
+        public UserBuilder id(Long id) {
             this.id = id;
             return this;
         }
@@ -162,11 +191,21 @@ public class User {
         }
 
         /**
+         * Sets the roles for the user.
+         * @param roles The roles.
+         * @return The builder instance.
+         */
+        public UserBuilder roles(Set<Role> roles) {
+            this.roles = roles;
+            return this;
+        }
+
+        /**
          * Builds a {@link User} instance.
          * @return A new {@link User}.
          */
         public User build() {
-            return new User(id, username, email, password);
+            return new User(id, username, email, password, roles);
         }
     }
 }

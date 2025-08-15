@@ -1,7 +1,11 @@
 package io.github.divyesh.user.service;
 
+import io.github.divyesh.user.exception.UserAlreadyExistsException;
 import io.github.divyesh.user.exception.UserNotFoundException;
+import io.github.divyesh.user.model.Role;
+import io.github.divyesh.user.model.RoleName;
 import io.github.divyesh.user.model.User;
+import io.github.divyesh.user.repository.RoleRepository;
 import io.github.divyesh.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +32,9 @@ class UserServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private RoleRepository roleRepository;
+
+    @Mock
     private PasswordEncoder passwordEncoder;
 
     @InjectMocks
@@ -36,23 +43,58 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        userService = new UserService(userRepository, roleRepository, passwordEncoder);
     }
 
     /**
-     * Tests that createUser encodes the password and saves a new user.
+     * Tests that createUser encodes the password and saves a new user with a default role.
      */
     @Test
-    void createUser_shouldEncodePasswordAndReturnSavedUser() {
+    void createUser_shouldEncodePasswordAndReturnSavedUserWithDefaultRole() {
         User user = User.builder().username("testuser").email("test@example.com").password("password").build();
+        Role userRole = new Role(RoleName.ROLE_USER);
+
+        when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.empty());
         when(passwordEncoder.encode("password")).thenReturn("encodedPassword");
-        when(userRepository.save(user)).thenReturn(user);
+        when(roleRepository.findByName(RoleName.ROLE_USER)).thenReturn(Optional.of(userRole));
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         User savedUser = userService.createUser(user);
 
         assertNotNull(savedUser);
         assertEquals("encodedPassword", savedUser.getPassword());
+        assertTrue(savedUser.getRoles().contains(userRole));
         verify(passwordEncoder, times(1)).encode("password");
         verify(userRepository, times(1)).save(user);
+        verify(roleRepository, times(1)).findByName(RoleName.ROLE_USER);
+    }
+
+    /**
+     * Tests that createUser throws UserAlreadyExistsException when username already exists.
+     */
+    @Test
+    void createUser_shouldThrowUserAlreadyExistsException_whenUsernameExists() {
+        User user = User.builder().username("existinguser").email("test@example.com").password("password").build();
+        when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.of(user));
+
+        assertThrows(UserAlreadyExistsException.class, () -> userService.createUser(user));
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    /**
+     * Tests that createUser throws UserAlreadyExistsException when email already exists.
+     */
+    @Test
+    void createUser_shouldThrowUserAlreadyExistsException_whenEmailExists() {
+        User user = User.builder().username("testuser").email("existing@example.com").password("password").build();
+        when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+
+        assertThrows(UserAlreadyExistsException.class, () -> userService.createUser(user));
+
+        verify(userRepository, never()).save(any(User.class));
     }
 
     /**

@@ -1,15 +1,21 @@
 package io.github.divyesh.user.service;
 
+import io.github.divyesh.user.exception.UserAlreadyExistsException;
 import io.github.divyesh.user.exception.UserNotFoundException;
+import io.github.divyesh.user.model.Role;
+import io.github.divyesh.user.model.RoleName;
 import io.github.divyesh.user.model.User;
+import io.github.divyesh.user.repository.RoleRepository;
 import io.github.divyesh.user.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Service class for managing user-related business logic.
@@ -19,26 +25,46 @@ public class UserService {
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
     /**
-     * Constructs a {@code UserService} with the given {@code UserRepository} and {@code PasswordEncoder}.
+     * Constructs a {@code UserService} with the given {@code UserRepository}, {@code RoleRepository} and {@code PasswordEncoder}.
      * @param userRepository The repository for user data access.
+     * @param roleRepository The repository for role data access.
      * @param passwordEncoder The encoder for hashing passwords.
      */
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
     /**
-     * Creates a new user after encoding their password.
+     * Creates a new user after encoding their password and assigning a default role.
      * @param user The user object to be created.
      * @return The created user object.
+     * @throws UserAlreadyExistsException if a user with the same username or email already exists.
      */
     public User createUser(User user) {
         log.info("Creating new user: {}", user.getUsername());
+
+        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+            throw new UserAlreadyExistsException("User with username " + user.getUsername() + " already exists.");
+        }
+        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+            throw new UserAlreadyExistsException("User with email " + user.getEmail() + " already exists.");
+        }
+
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        // Assign default role if no roles are specified
+        if (user.getRoles().isEmpty()) {
+            Role userRole = roleRepository.findByName(RoleName.ROLE_USER)
+                    .orElseGet(() -> roleRepository.save(new Role(RoleName.ROLE_USER)));
+            user.setRoles(new HashSet<>(Set.of(userRole)));
+        }
+
         return userRepository.save(user);
     }
 
