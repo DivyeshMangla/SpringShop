@@ -1,9 +1,9 @@
 package io.github.divyesh.user.service;
 
 import io.github.divyesh.user.exception.UserNotFoundException;
-
 import io.github.divyesh.user.model.User;
 import io.github.divyesh.user.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,22 +19,26 @@ public class UserService {
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     /**
-     * Constructs a {@code UserService} with the given {@code UserRepository}.
+     * Constructs a {@code UserService} with the given {@code UserRepository} and {@code PasswordEncoder}.
      * @param userRepository The repository for user data access.
+     * @param passwordEncoder The encoder for hashing passwords.
      */
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /**
-     * Creates a new user.
+     * Creates a new user after encoding their password.
      * @param user The user object to be created.
      * @return The created user object.
      */
     public User createUser(User user) {
         log.info("Creating new user: {}", user.getUsername());
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
     }
 
@@ -58,7 +62,7 @@ public class UserService {
     }
 
     /**
-     * Updates an existing user.
+     * Updates an existing user. If the password is provided, it will be encoded.
      * @param id The ID of the user to update.
      * @param userDetails The user object with updated details.
      * @return An Optional containing the updated user if found, or empty if not found.
@@ -69,7 +73,9 @@ public class UserService {
                 .map(user -> {
                     user.setUsername(userDetails.getUsername());
                     user.setEmail(userDetails.getEmail());
-                    user.setPassword(userDetails.getPassword());
+                    if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
+                        user.setPassword(passwordEncoder.encode(userDetails.getPassword()));
+                    }
                     return userRepository.save(user);
                 });
     }
@@ -93,6 +99,15 @@ public class UserService {
     public Optional<User> authenticateUser(String username, String password) {
         log.info("Authenticating user: {}", username);
         return userRepository.findByUsername(username)
-                .filter(user -> user.getPassword().equals(password));
+                .filter(user -> passwordEncoder.matches(password, user.getPassword()));
+    }
+
+    /**
+     * Finds a user by their username.
+     * @param username The username to search for.
+     * @return An Optional containing the user if found.
+     */
+    public Optional<User> findByUsername(String username) {
+        return userRepository.findByUsername(username);
     }
 }

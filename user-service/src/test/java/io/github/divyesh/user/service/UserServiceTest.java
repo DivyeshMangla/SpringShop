@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Arrays;
 import java.util.List;
@@ -19,12 +20,15 @@ import static org.mockito.Mockito.*;
 /**
  * Unit tests for the UserService class.
  * These tests focus on the business logic of the UserService in isolation,
- * mocking the UserRepository dependency.
+ * mocking the UserRepository and PasswordEncoder dependencies.
  */
 class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UserService userService;
@@ -35,17 +39,19 @@ class UserServiceTest {
     }
 
     /**
-     * Tests that createUser successfully saves a new user.
+     * Tests that createUser encodes the password and saves a new user.
      */
     @Test
-    void createUser_shouldReturnSavedUser() {
+    void createUser_shouldEncodePasswordAndReturnSavedUser() {
         User user = User.builder().username("testuser").email("test@example.com").password("password").build();
+        when(passwordEncoder.encode("password")).thenReturn("encodedPassword");
         when(userRepository.save(user)).thenReturn(user);
 
         User savedUser = userService.createUser(user);
 
         assertNotNull(savedUser);
-        assertEquals("testuser", savedUser.getUsername());
+        assertEquals("encodedPassword", savedUser.getPassword());
+        verify(passwordEncoder, times(1)).encode("password");
         verify(userRepository, times(1)).save(user);
     }
 
@@ -95,22 +101,24 @@ class UserServiceTest {
     }
 
     /**
-     * Tests that updateUser successfully updates an existing user.
+     * Tests that updateUser successfully updates an existing user and encodes the new password.
      */
     @Test
-    void updateUser_shouldReturnUpdatedUser_whenFound() {
+    void updateUser_shouldEncodePasswordAndReturnUpdatedUser_whenFound() {
         User existingUser = User.builder().id(1L).username("olduser").email("old@example.com").password("oldpass").build();
         User updatedDetails = User.builder().username("newuser").email("new@example.com").password("newpass").build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+        when(passwordEncoder.encode("newpass")).thenReturn("encodedNewPass");
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Optional<User> result = userService.updateUser(1L, updatedDetails);
 
         assertTrue(result.isPresent());
         assertEquals("newuser", result.get().getUsername());
-        assertEquals("new@example.com", result.get().getEmail());
+        assertEquals("encodedNewPass", result.get().getPassword());
         verify(userRepository, times(1)).findById(1L);
+        verify(passwordEncoder, times(1)).encode("newpass");
         verify(userRepository, times(1)).save(any(User.class));
     }
 
@@ -135,13 +143,13 @@ class UserServiceTest {
     @Test
     void deleteUser_shouldDeleteUser_whenFound() {
         User user = User.builder().id(1L).username("testuser").build();
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user)); // Mock findById
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         doNothing().when(userRepository).deleteById(1L);
 
         userService.deleteUser(1L);
 
-        verify(userRepository, times(1)).findById(1L); // Verify findById is called
-        verify(userRepository, times(1)).deleteById(1L); // Verify deleteById is called
+        verify(userRepository, times(1)).findById(1L);
+        verify(userRepository, times(1)).deleteById(1L);
     }
 
     /**
@@ -149,11 +157,54 @@ class UserServiceTest {
      */
     @Test
     void deleteUser_shouldThrowUserNotFoundException_whenNotFound() {
-        when(userRepository.findById(1L)).thenReturn(Optional.empty()); // Mock findById to return empty
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(UserNotFoundException.class, () -> userService.deleteUser(1L));
 
-        verify(userRepository, times(1)).findById(1L); // Verify findById is called
-        verify(userRepository, never()).deleteById(anyLong()); // Verify deleteById is NOT called
+        verify(userRepository, times(1)).findById(1L);
+        verify(userRepository, never()).deleteById(anyLong());
+    }
+
+    /**
+     * Tests that authenticateUser returns user when credentials are correct.
+     */
+    @Test
+    void authenticateUser_shouldReturnUser_whenCredentialsAreCorrect() {
+        User user = User.builder().username("testuser").password("encodedPassword").build();
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("password", "encodedPassword")).thenReturn(true);
+
+        Optional<User> result = userService.authenticateUser("testuser", "password");
+
+        assertTrue(result.isPresent());
+        assertEquals("testuser", result.get().getUsername());
+    }
+
+    /**
+     * Tests that authenticateUser returns empty optional when credentials are incorrect.
+     */
+    @Test
+    void authenticateUser_shouldReturnEmptyOptional_whenCredentialsAreIncorrect() {
+        User user = User.builder().username("testuser").password("encodedPassword").build();
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("wrongpassword", "encodedPassword")).thenReturn(false);
+
+        Optional<User> result = userService.authenticateUser("testuser", "wrongpassword");
+
+        assertFalse(result.isPresent());
+    }
+
+    /**
+     * Tests that findByUsername returns a user when found.
+     */
+    @Test
+    void findByUsername_shouldReturnUser_whenFound() {
+        User user = User.builder().username("testuser").build();
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+
+        Optional<User> result = userService.findByUsername("testuser");
+
+        assertTrue(result.isPresent());
+        assertEquals("testuser", result.get().getUsername());
     }
 }

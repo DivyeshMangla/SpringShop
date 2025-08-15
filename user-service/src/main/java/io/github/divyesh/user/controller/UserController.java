@@ -9,10 +9,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * REST controller for managing user-related operations.
@@ -24,24 +27,27 @@ import java.util.stream.Collectors;
 public class UserController {
 
     private final UserService userService;
+    private final AuthenticationManager authenticationManager;
 
     /**
-     * Constructs a {@code UserController} with the given {@code UserService}.
+     * Constructs a {@code UserController} with the given {@code UserService} and {@code AuthenticationManager}.
      * @param userService The service responsible for user business logic.
+     * @param authenticationManager The manager for handling authentication.
      */
-    public UserController(UserService userService) {
+    public UserController(UserService userService, AuthenticationManager authenticationManager) {
         this.userService = userService;
+        this.authenticationManager = authenticationManager;
     }
 
     /**
-     * Creates a new user.
+     * Registers a new user.
      * @param userRequest The user request object containing user details.
      * @return A {@code ResponseEntity} with the created user's response and HTTP status.
      */
-    @PostMapping
+    @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Create a new user", description = "Registers a new user in the system.")
-    public ResponseEntity<UserResponse> createUser(@RequestBody UserRequest userRequest) {
+    @Operation(summary = "Register a new user", description = "Registers a new user in the system.")
+    public ResponseEntity<UserResponse> registerUser(@RequestBody UserRequest userRequest) {
         User user = User.builder()
                 .username(userRequest.username())
                 .email(userRequest.email())
@@ -49,6 +55,24 @@ public class UserController {
                 .build();
         User savedUser = userService.createUser(user);
         return new ResponseEntity<>(mapToUserResponse(savedUser), HttpStatus.CREATED);
+    }
+
+    /**
+     * Authenticates a user with username and password.
+     * @param loginRequest The login request containing username and password.
+     * @return A {@code ResponseEntity} with the user response if authentication is successful.
+     */
+    @PostMapping("/login")
+    @Operation(summary = "User login", description = "Authenticates a user with username and password.")
+    public ResponseEntity<UserResponse> login(@RequestBody LoginRequest loginRequest) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password()));
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        return userService.findByUsername(loginRequest.username())
+                .map(user -> new ResponseEntity<>(mapToUserResponse(user), HttpStatus.OK))
+                .orElse(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
     }
 
     /**
@@ -101,25 +125,12 @@ public class UserController {
      * @param id The ID of the user to delete.
      * @return A {@code ResponseEntity} with no content and HTTP status.
      */
-        @DeleteMapping("/{id}")
+    @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete user by ID", description = "Deletes a user from the system by their unique ID.")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
-
-    /**
-     * Authenticates a user with username and password.
-     * @param loginRequest The login request containing username and password.
-     * @return A {@code ResponseEntity} with the user response if authentication is successful.
-     */
-    @PostMapping("/login")
-    @Operation(summary = "User login", description = "Authenticates a user with username and password.")
-    public ResponseEntity<UserResponse> login(@RequestBody LoginRequest loginRequest) {
-        return userService.authenticateUser(loginRequest.username(), loginRequest.password())
-                .map(user -> new ResponseEntity<>(mapToUserResponse(user), HttpStatus.OK))
-                .orElse(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
     }
 
     /**

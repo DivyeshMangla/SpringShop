@@ -87,3 +87,4 @@ pnpm-debug.log*
 # Frontend
 frontend/
 
+/MAKE_IT_PRODUCTION_GRADE.md
