@@ -1,10 +1,12 @@
 package io.github.divyesh.user.controller;
 
+import io.github.divyesh.user.dto.JwtResponse;
 import io.github.divyesh.user.dto.LoginRequest;
 import io.github.divyesh.user.dto.UserRequest;
 import io.github.divyesh.user.dto.UserResponse;
 import io.github.divyesh.user.model.User;
 import io.github.divyesh.user.service.UserService;
+import io.github.divyesh.user.util.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
@@ -13,6 +15,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,15 +31,18 @@ public class UserController {
 
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
 
     /**
-     * Constructs a {@code UserController} with the given {@code UserService} and {@code AuthenticationManager}.
+     * Constructs a {@code UserController} with the given dependencies.
      * @param userService The service responsible for user business logic.
      * @param authenticationManager The manager for handling authentication.
+     * @param jwtUtil The utility for handling JWTs.
      */
-    public UserController(UserService userService, AuthenticationManager authenticationManager) {
+    public UserController(UserService userService, AuthenticationManager authenticationManager, JwtUtil jwtUtil) {
         this.userService = userService;
         this.authenticationManager = authenticationManager;
+        this.jwtUtil = jwtUtil;
     }
 
     /**
@@ -58,21 +64,21 @@ public class UserController {
     }
 
     /**
-     * Authenticates a user with username and password.
+     * Authenticates a user and returns a JWT.
      * @param loginRequest The login request containing username and password.
-     * @return A {@code ResponseEntity} with the user response if authentication is successful.
+     * @return A {@code ResponseEntity} with the JWT response.
      */
     @PostMapping("/login")
-    @Operation(summary = "User login", description = "Authenticates a user with username and password.")
-    public ResponseEntity<UserResponse> login(@RequestBody LoginRequest loginRequest) {
+    @Operation(summary = "User login", description = "Authenticates a user and returns a JWT.")
+    public ResponseEntity<JwtResponse> login(@RequestBody LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password()));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
+        final UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        final String token = jwtUtil.generateToken(userDetails);
 
-        return userService.findByUsername(loginRequest.username())
-                .map(user -> new ResponseEntity<>(mapToUserResponse(user), HttpStatus.OK))
-                .orElse(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
+        return ResponseEntity.ok(new JwtResponse(token));
     }
 
     /**
@@ -95,7 +101,7 @@ public class UserController {
      */
     @GetMapping("/{id}")
     @Operation(summary = "Get user by ID", description = "Retrieves a user by their unique ID.")
-    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
+    public ResponseEntity<UserResponse> getUserById(@PathVariable long id) {
         return userService.getUserById(id)
                 .map(user -> new ResponseEntity<>(mapToUserResponse(user), HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
@@ -109,7 +115,7 @@ public class UserController {
      */
     @PutMapping("/{id}")
     @Operation(summary = "Update user by ID", description = "Updates an existing user's details by their unique ID.")
-    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @RequestBody UserRequest userRequest) {
+    public ResponseEntity<UserResponse> updateUser(@PathVariable long id, @RequestBody UserRequest userRequest) {
         User userDetails = User.builder()
                 .username(userRequest.username())
                 .email(userRequest.email())
@@ -128,7 +134,7 @@ public class UserController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete user by ID", description = "Deletes a user from the system by their unique ID.")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable long id) {
         userService.deleteUser(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

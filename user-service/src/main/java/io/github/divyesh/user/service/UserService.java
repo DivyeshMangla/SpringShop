@@ -84,7 +84,7 @@ public class UserService {
      * Deletes a user by their ID.
      * @param id The ID of the user to delete.
      */
-    public void deleteUser(Long id) {
+    public void deleteUser(long id) {
         userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + id));
         userRepository.deleteById(id);

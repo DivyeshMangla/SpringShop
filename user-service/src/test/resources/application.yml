@@ -9,8 +9,12 @@ spring:
     url: jdbc:h2:mem:testdb
     driverClassName: org.h2.Driver
     username: sa
-    password: 
+    password:
 
 eureka:
   client:
     enabled: false
+
+jwt:
+  secret: a-very-long-and-secure-random-string-for-jwt-secret-key-at-least-64-chars
+  expiration: 3600
